@@ -6,4 +6,6 @@ public interface ConversionService {
 
     String publish(VideoConversion video) throws Exception;
 
+    String save(VideoConversion video);
+
 }

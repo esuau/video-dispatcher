@@ -1,5 +1,13 @@
 package edu.esipe.i3.ezipflix.videodispatcher.service;
 
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Item;
+import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -15,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -26,6 +36,7 @@ public class ConversionServiceImpl implements ConversionService {
 
     private String result;
 
+    @Override
     public String publish(VideoConversion video) throws Exception {
         ProjectTopicName topicName = ProjectTopicName.of(projectId, topic);
         Publisher publisher = null;
@@ -71,6 +82,23 @@ public class ConversionServiceImpl implements ConversionService {
             }
         }
         return result;
+    }
+
+    @Override
+    public String save(VideoConversion video) {
+        AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard()
+                .withRegion(Regions.EU_WEST_3)
+                .build();
+        DynamoDB dynamoDB = new DynamoDB(client);
+        Table table = dynamoDB.getTable("video");
+        Item item = new Item()
+                .withPrimaryKey("uuid", video.getUuid().toString())
+                .withString("origin_path", video.getOriginPath().toString())
+                .withString("target_path", ".");
+
+        PutItemOutcome outcome = table.putItem(item);
+        log.info(outcome.toString());
+        return outcome.toString();
     }
 
 }

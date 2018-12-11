@@ -30,8 +30,9 @@ public class ConversionController {
 
         VideoConversion videoConversion = new VideoConversion(UUID.randomUUID(), request.getPath(), new URI(""));
         String messageId = this.conversionService.publish(videoConversion);
+        String dbOutcome = this.conversionService.save(videoConversion);
 
-        return new ConversionResponse(videoConversion.getUuid(), messageId);
+        return new ConversionResponse(videoConversion.getUuid(), messageId, dbOutcome);
     }
 
 }

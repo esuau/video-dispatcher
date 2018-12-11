@@ -40,6 +40,7 @@ public class ConversionControllerTest {
     @Test
     public void convertReturnsAConversionResponse() throws Exception {
         when(conversionService.publish(any())).thenReturn("fakeMessageId");
+        when(conversionService.save(any())).thenReturn("fakeOutcome");
 
         ConversionRequest request = new ConversionRequest(new URI("fakePath"));
         mockMvc.perform(post("/convert")
@@ -49,10 +50,11 @@ public class ConversionControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(jsonPath("$", Matchers.notNullValue()))
                 .andExpect(jsonPath("$.uuid", Matchers.notNullValue()))
-                .andExpect(jsonPath("$.messageId", Matchers.is("fakeMessageId")));
+                .andExpect(jsonPath("$.messageId", Matchers.is("fakeMessageId")))
+                .andExpect(jsonPath("$.dbOutcome", Matchers.is("fakeOutcome")));
     }
 
-    public static String asJsonString(final Object obj) {
+    private static String asJsonString(final Object obj) {
         try {
             final ObjectMapper mapper = new ObjectMapper();
             return mapper.writeValueAsString(obj);

@@ -12,4 +12,5 @@ import java.util.UUID;
 public class ConversionResponse {
     private UUID uuid;
     private String messageId;
+    private String dbOutcome;
 }
