@@ -7,7 +7,6 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Table;
-import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -23,8 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -33,6 +30,8 @@ public class ConversionServiceImpl implements ConversionService {
 
     @Value("${gcloud.pubsub.project}") String projectId;
     @Value("${gcloud.pubsub.topic}") String topic;
+
+    @Value("${aws.dynamodb.table}") String tableName;
 
     private String result;
 
@@ -90,7 +89,7 @@ public class ConversionServiceImpl implements ConversionService {
                 .withRegion(Regions.EU_WEST_3)
                 .build();
         DynamoDB dynamoDB = new DynamoDB(client);
-        Table table = dynamoDB.getTable("video");
+        Table table = dynamoDB.getTable(tableName);
         Item item = new Item()
                 .withPrimaryKey("uuid", video.getUuid().toString())
                 .withString("origin_path", video.getOriginPath().toString())
