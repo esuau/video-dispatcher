@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.net.URI;
+import java.util.Date;
 import java.util.UUID;
 
 @Data
@@ -12,6 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class VideoConversion {
     private UUID uuid;
+    private Date conversionDate;
     private URI originPath;
     private URI targetPath;
 }

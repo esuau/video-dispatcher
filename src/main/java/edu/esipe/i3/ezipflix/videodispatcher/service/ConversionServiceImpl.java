@@ -22,6 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -90,8 +94,12 @@ public class ConversionServiceImpl implements ConversionService {
                 .build();
         DynamoDB dynamoDB = new DynamoDB(client);
         Table table = dynamoDB.getTable(tableName);
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+        df.setTimeZone(tz);
         Item item = new Item()
                 .withPrimaryKey("uuid", video.getUuid().toString())
+                .withString("conversion_date", df.format(video.getConversionDate()))
                 .withString("origin_path", video.getOriginPath().toString())
                 .withString("target_path", ".");
 

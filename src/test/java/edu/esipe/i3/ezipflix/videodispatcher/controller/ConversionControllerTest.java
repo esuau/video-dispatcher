@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.net.URI;
+import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -51,7 +52,9 @@ public class ConversionControllerTest {
                 .andExpect(jsonPath("$", Matchers.notNullValue()))
                 .andExpect(jsonPath("$.uuid", Matchers.notNullValue()))
                 .andExpect(jsonPath("$.messageId", Matchers.is("fakeMessageId")))
-                .andExpect(jsonPath("$.dbOutcome", Matchers.is("fakeOutcome")));
+                .andExpect(jsonPath("$.dbOutcome", Matchers.is("fakeOutcome")))
+                .andExpect(jsonPath("$.date", Matchers.notNullValue()))
+                .andExpect(jsonPath("$.date").value(Matchers.lessThanOrEqualTo(new Date().getTime())));
     }
 
     private static String asJsonString(final Object obj) {

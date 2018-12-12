@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.Date;
 import java.util.UUID;
 
 @Slf4j
@@ -28,11 +29,15 @@ public class ConversionController {
     public ConversionResponse convert(@RequestBody ConversionRequest request) throws Exception {
         log.info("URI = {}", request.getPath().toString());
 
-        VideoConversion videoConversion = new VideoConversion(UUID.randomUUID(), request.getPath(), new URI(""));
+        VideoConversion videoConversion = new VideoConversion(
+                UUID.randomUUID(),
+                new Date(),
+                request.getPath(),
+                new URI(""));
         String messageId = this.conversionService.publish(videoConversion);
         String dbOutcome = this.conversionService.save(videoConversion);
 
-        return new ConversionResponse(videoConversion.getUuid(), messageId, dbOutcome);
+        return new ConversionResponse(videoConversion.getUuid(), messageId, dbOutcome, videoConversion.getConversionDate());
     }
 
 }
