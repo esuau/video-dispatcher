@@ -34,8 +34,8 @@ public class ConversionController {
                 new Date(),
                 request.getPath(),
                 new URI(""));
-        String messageId = this.conversionService.publish(videoConversion);
         String dbOutcome = this.conversionService.save(videoConversion);
+        String messageId = this.conversionService.publish(videoConversion);
 
         return new ConversionResponse(videoConversion.getUuid(), messageId, dbOutcome, videoConversion.getConversionDate());
     }
