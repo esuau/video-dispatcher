@@ -112,7 +112,7 @@ public class ConversionServiceImpl implements ConversionService {
     }
 
     @Override
-    public boolean checkOriginFileExists(String objectName) {
+    public boolean checkFileExists(String objectName) {
         AmazonS3 client = AmazonS3Client
                 .builder()
                 .withRegion(Regions.EU_WEST_3)

@@ -2,6 +2,7 @@ package edu.esipe.i3.ezipflix.videodispatcher.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionRequest;
+import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.AlreadyExistsException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.NotFoundException;
 import edu.esipe.i3.ezipflix.videodispatcher.service.ConversionService;
 import org.hamcrest.Matchers;
@@ -49,9 +50,10 @@ public class ConversionControllerTest {
     public void convertReturnsAConversionResponse() throws Exception {
         when(conversionService.publish(any())).thenReturn("fakeMessageId");
         when(conversionService.save(any())).thenReturn("fakeOutcome");
-        when(conversionService.checkOriginFileExists(anyString())).thenReturn(true);
+        when(conversionService.checkFileExists("fake.mkv")).thenReturn(true);
+        when(conversionService.checkFileExists("fake.avi")).thenReturn(false);
 
-        ConversionRequest request = new ConversionRequest(new URI("fakePath"));
+        ConversionRequest request = new ConversionRequest(new URI("fake.mkv"));
         mockMvc.perform(post("/convert")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(asJsonString(request)))
@@ -66,13 +68,24 @@ public class ConversionControllerTest {
     }
 
     @Test
-    public void convertThrowsException() throws Exception {
+    public void convertThrowsNotFoundException() throws Exception {
         thrown.expect(NotFoundException.class);
-        thrown.expectMessage(Matchers.containsString("Object \"testObject\" does not exist."));
+        thrown.expectMessage(Matchers.containsString("Object \"testObject.mkv\" does not exist."));
 
-        when(conversionService.checkOriginFileExists(anyString())).thenReturn(false);
+        when(conversionService.checkFileExists("testObject.mkv")).thenReturn(false);
 
-        ConversionRequest request = new ConversionRequest(new URI("testObject"));
+        ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"));
+        conversionController.convert(request);
+    }
+
+    @Test
+    public void convertThrowsAlreadyExistsException() throws Exception {
+        thrown.expect(AlreadyExistsException.class);
+        thrown.expectMessage(Matchers.containsString("Object \"testObject.mkv\" has already been converted."));
+
+        when(conversionService.checkFileExists(anyString())).thenReturn(true);
+
+        ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"));
         conversionController.convert(request);
     }
 

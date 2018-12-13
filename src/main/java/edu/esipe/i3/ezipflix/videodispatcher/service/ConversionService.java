@@ -8,6 +8,6 @@ public interface ConversionService {
 
     String save(VideoConversion video);
 
-    boolean checkOriginFileExists(String objectName);
+    boolean checkFileExists(String objectName);
 
 }
