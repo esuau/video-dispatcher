@@ -1,5 +1,6 @@
 package edu.esipe.i3.ezipflix.videodispatcher.definition;
 
+import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,6 @@ import java.util.UUID;
 public class ConversionResponse {
     private UUID uuid;
     private String messageId;
-    private String dbOutcome;
+    private PutItemResult dbResult;
     private Date date;
 }

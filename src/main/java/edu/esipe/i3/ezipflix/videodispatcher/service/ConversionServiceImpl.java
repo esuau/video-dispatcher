@@ -7,6 +7,7 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -91,7 +92,7 @@ public class ConversionServiceImpl implements ConversionService {
     }
 
     @Override
-    public String save(VideoConversion video) {
+    public PutItemResult save(VideoConversion video) {
         AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard()
                 .withRegion(Regions.EU_WEST_3)
                 .build();
@@ -107,8 +108,8 @@ public class ConversionServiceImpl implements ConversionService {
                 .withString("target_path", ".");
 
         PutItemOutcome outcome = table.putItem(item);
-        log.info(outcome.toString());
-        return outcome.toString();
+        log.info("DB outcome = {}", outcome.getPutItemResult().getSdkHttpMetadata().toString());
+        return outcome.getPutItemResult();
     }
 
     @Override

@@ -1,5 +1,7 @@
 package edu.esipe.i3.ezipflix.videodispatcher.controller;
 
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionRequest;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.AlreadyExistsException;
@@ -48,8 +50,10 @@ public class ConversionControllerTest {
 
     @Test
     public void convertReturnsAConversionResponse() throws Exception {
+        AttributeValue attributes = new AttributeValue("testAttribute");
+
         when(conversionService.publish(any())).thenReturn("fakeMessageId");
-        when(conversionService.save(any())).thenReturn("fakeOutcome");
+        when(conversionService.save(any())).thenReturn(new PutItemResult().addAttributesEntry("attribute", attributes));
         when(conversionService.checkFileExists("fake.mkv")).thenReturn(true);
         when(conversionService.checkFileExists("fake.avi")).thenReturn(false);
 
@@ -62,7 +66,8 @@ public class ConversionControllerTest {
                 .andExpect(jsonPath("$", Matchers.notNullValue()))
                 .andExpect(jsonPath("$.uuid", Matchers.notNullValue()))
                 .andExpect(jsonPath("$.messageId", Matchers.is("fakeMessageId")))
-                .andExpect(jsonPath("$.dbOutcome", Matchers.is("fakeOutcome")))
+                .andExpect(jsonPath("$.dbResult", Matchers.notNullValue()))
+                .andExpect(jsonPath("$.dbResult.attributes.attribute.s", Matchers.is("testAttribute")))
                 .andExpect(jsonPath("$.date", Matchers.notNullValue()))
                 .andExpect(jsonPath("$.date").value(Matchers.lessThanOrEqualTo(new Date().getTime())));
     }

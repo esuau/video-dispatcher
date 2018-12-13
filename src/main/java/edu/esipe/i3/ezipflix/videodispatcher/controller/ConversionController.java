@@ -1,5 +1,6 @@
 package edu.esipe.i3.ezipflix.videodispatcher.controller;
 
+import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionRequest;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionResponse;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.VideoConversion;
@@ -45,10 +46,11 @@ public class ConversionController {
                 new Date(),
                 request.getPath(),
                 new URI(""));
-        String dbOutcome = this.conversionService.save(videoConversion);
+        PutItemResult dbResult = this.conversionService.save(videoConversion);
         String messageId = this.conversionService.publish(videoConversion);
 
-        return new ConversionResponse(videoConversion.getUuid(), messageId, dbOutcome, videoConversion.getConversionDate());
+        log.info("Successfully sent conversion request.");
+        return new ConversionResponse(videoConversion.getUuid(), messageId, dbResult, videoConversion.getConversionDate());
     }
 
     private String getConvertedFileName(String fileName) {
