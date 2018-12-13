@@ -3,6 +3,7 @@ package edu.esipe.i3.ezipflix.videodispatcher.controller;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionRequest;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionResponse;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.VideoConversion;
+import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.NotFoundException;
 import edu.esipe.i3.ezipflix.videodispatcher.service.ConversionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,10 @@ public class ConversionController {
     @PostMapping(value = "/convert")
     public ConversionResponse convert(@RequestBody ConversionRequest request) throws Exception {
         log.info("URI = {}", request.getPath().toString());
+
+        if (!this.conversionService.checkOriginFileExists(request.getPath().toString())) {
+            throw new NotFoundException("Object \"" + request.getPath().toString() + "\" does not exist.");
+        }
 
         VideoConversion videoConversion = new VideoConversion(
                 UUID.randomUUID(),

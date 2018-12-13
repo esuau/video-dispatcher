@@ -7,6 +7,8 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -24,7 +26,6 @@ import org.springframework.stereotype.Service;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.OffsetDateTime;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +37,8 @@ public class ConversionServiceImpl implements ConversionService {
     @Value("${gcloud.pubsub.topic}") String topic;
 
     @Value("${aws.dynamodb.table}") String tableName;
+
+    @Value("${aws.s3.name}") String bucketName;
 
     private String result;
 
@@ -106,6 +109,15 @@ public class ConversionServiceImpl implements ConversionService {
         PutItemOutcome outcome = table.putItem(item);
         log.info(outcome.toString());
         return outcome.toString();
+    }
+
+    @Override
+    public boolean checkOriginFileExists(String objectName) {
+        AmazonS3 client = AmazonS3Client
+                .builder()
+                .withRegion(Regions.EU_WEST_3)
+                .build();
+        return client.doesObjectExist(bucketName, objectName);
     }
 
 }
