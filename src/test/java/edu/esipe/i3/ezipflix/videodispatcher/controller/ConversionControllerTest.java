@@ -5,6 +5,7 @@ import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionRequest;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.AlreadyExistsException;
+import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.BadRequestException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.NotFoundException;
 import edu.esipe.i3.ezipflix.videodispatcher.service.ConversionService;
 import org.hamcrest.Matchers;
@@ -57,7 +58,7 @@ public class ConversionControllerTest {
         when(conversionService.checkFileExists("fake.mkv")).thenReturn(true);
         when(conversionService.checkFileExists("fake.avi")).thenReturn(false);
 
-        ConversionRequest request = new ConversionRequest(new URI("fake.mkv"));
+        ConversionRequest request = new ConversionRequest(new URI("fake.mkv"), null);
         mockMvc.perform(post("/convert")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(asJsonString(request)))
@@ -79,7 +80,7 @@ public class ConversionControllerTest {
 
         when(conversionService.checkFileExists("testObject.mkv")).thenReturn(false);
 
-        ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"));
+        ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), null);
         conversionController.convert(request);
     }
 
@@ -90,7 +91,36 @@ public class ConversionControllerTest {
 
         when(conversionService.checkFileExists(anyString())).thenReturn(true);
 
-        ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"));
+        ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), null);
+        conversionController.convert(request);
+    }
+
+    @Test
+    public void convertThrowsAlreadyExistsExceptionWithTargetPath() throws Exception {
+        thrown.expect(AlreadyExistsException.class);
+        thrown.expectMessage(Matchers.containsString("Object \"testObject.mkv\" has already been converted."));
+
+        when(conversionService.checkFileExists(anyString())).thenReturn(true);
+
+        ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), new URI("targetPath.avi"));
+        conversionController.convert(request);
+    }
+
+    @Test
+    public void convertThrowsBadRequestExceptionWithNullOriginPath() throws Exception {
+        thrown.expect(BadRequestException.class);
+        thrown.expectMessage(Matchers.containsString("Missing parameter: field \"originPath\" is required."));
+
+        ConversionRequest request = new ConversionRequest(null, null);
+        conversionController.convert(request);
+    }
+
+    @Test
+    public void convertThrowsBadRequestExceptionWithInvalidTargetPath() throws Exception {
+        thrown.expect(BadRequestException.class);
+        thrown.expectMessage(Matchers.containsString("Extension of media file is invalid: targetPath"));
+
+        ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), new URI("targetPath"));
         conversionController.convert(request);
     }
 

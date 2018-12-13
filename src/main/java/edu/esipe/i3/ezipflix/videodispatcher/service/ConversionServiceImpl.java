@@ -34,12 +34,16 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class ConversionServiceImpl implements ConversionService {
 
-    @Value("${gcloud.pubsub.project}") String projectId;
-    @Value("${gcloud.pubsub.topic}") String topic;
+    @Value("${gcloud.pubsub.project}")
+    String projectId;
+    @Value("${gcloud.pubsub.topic}")
+    String topic;
 
-    @Value("${aws.dynamodb.table}") String tableName;
+    @Value("${aws.dynamodb.table}")
+    String tableName;
 
-    @Value("${aws.s3.name}") String bucketName;
+    @Value("${aws.s3.name}")
+    String bucketName;
 
     private String result;
 
@@ -105,7 +109,7 @@ public class ConversionServiceImpl implements ConversionService {
                 .withPrimaryKey("uuid", video.getUuid().toString())
                 .withString("conversion_date", df.format(video.getConversionDate()))
                 .withString("origin_path", video.getOriginPath().toString())
-                .withString("target_path", ".");
+                .withString("target_path", video.getTargetPath().toString());
 
         PutItemOutcome outcome = table.putItem(item);
         log.info("DB outcome = {}", outcome.getPutItemResult().getSdkHttpMetadata().toString());

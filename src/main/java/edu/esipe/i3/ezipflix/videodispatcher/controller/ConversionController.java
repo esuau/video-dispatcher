@@ -5,6 +5,7 @@ import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionRequest;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionResponse;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.VideoConversion;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.AlreadyExistsException;
+import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.BadRequestException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.NotFoundException;
 import edu.esipe.i3.ezipflix.videodispatcher.service.ConversionService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,22 +31,40 @@ public class ConversionController {
 
     @PostMapping(value = "/convert")
     public ConversionResponse convert(@RequestBody ConversionRequest request) throws Exception {
-        log.info("URI = {}", request.getPath().toString());
-        String pathString = request.getPath().toString();
+        String originPathStr;
+        String targetPathStr;
 
-        if (!this.conversionService.checkFileExists(pathString)) {
-            throw new NotFoundException("Object \"" + pathString + "\" does not exist.");
+        if (null != request.getOriginPath()) {
+            originPathStr = request.getOriginPath().toString();
+        } else {
+            throw new BadRequestException("Missing parameter: field \"originPath\" is required.");
         }
 
-        if (this.conversionService.checkFileExists(this.getConvertedFileName(pathString))) {
-            throw new AlreadyExistsException("Object \"" + pathString + "\" has already been converted.");
+        if (null != request.getTargetPath()) {
+            targetPathStr = request.getTargetPath().toString();
+            if (!targetPathStr.substring(targetPathStr.lastIndexOf('.') + 1).equals("avi")) {
+                throw new BadRequestException("Extension of media file is invalid: " + targetPathStr);
+            }
+        } else {
+            targetPathStr = this.getConvertedFileName(originPathStr);
+        }
+
+        log.info("originPath = {}", originPathStr);
+        log.info("targetPath = {}", targetPathStr);
+
+        if (!this.conversionService.checkFileExists(originPathStr)) {
+            throw new NotFoundException("Object \"" + originPathStr + "\" does not exist.");
+        }
+
+        if (this.conversionService.checkFileExists(targetPathStr)) {
+            throw new AlreadyExistsException("Object \"" + originPathStr + "\" has already been converted.");
         }
 
         VideoConversion videoConversion = new VideoConversion(
                 UUID.randomUUID(),
                 new Date(),
-                request.getPath(),
-                new URI(""));
+                request.getOriginPath(),
+                new URI(targetPathStr));
         PutItemResult dbResult = this.conversionService.save(videoConversion);
         String messageId = this.conversionService.publish(videoConversion);
 

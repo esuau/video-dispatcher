@@ -10,5 +10,6 @@ import java.net.URI;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ConversionRequest {
-    private URI path;
+    private URI originPath;
+    private URI targetPath;
 }
