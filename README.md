@@ -40,6 +40,10 @@ After building the project, you can run the `.jar` by executing the following co
 java -jar target/video-dispatcher-<version>.jar
 ```
 
+## UML component diagram
+
+![UML component diagram](docs/uml-components.png)
+
 ## Why Amazon DynamoDB
 
 **Reliability:**
