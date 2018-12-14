@@ -40,3 +40,18 @@ After building the project, you can run the `.jar` by executing the following co
 java -jar target/video-dispatcher-<version>.jar
 ```
 
+## Why Amazon DynamoDB
+
+**Reliability:**
+ * Hosted on Amazon cloud
+ * Fully managed service
+ * \#2 rank in [DB-engines ranking](https://db-engines.com/en/ranking/document+store) of document stores
+ 
+**Functionality:**
+ * NoSQL (schema-free)
+ * Supports Java and Python
+ * Continuous backup over the last 35 days
+
+**Performance:**
+ * Single-digit millisecond responsiveness at any scale
+ * In memory cache reducing response time
