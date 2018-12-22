@@ -6,14 +6,10 @@ import edu.esipe.i3.ezipflix.videodispatcher.definition.VideoConversion;
 
 import java.util.UUID;
 
-public interface ConversionService {
-
-    String publish(VideoConversion video) throws Exception;
+public interface DatabaseService {
 
     PutItemResult save(VideoConversion video);
 
     DeleteItemResult remove(UUID uuid);
-
-    boolean checkFileExists(String objectName);
 
 }

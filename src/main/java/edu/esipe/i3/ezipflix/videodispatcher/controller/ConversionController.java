@@ -8,7 +8,9 @@ import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.AlreadyExistsE
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.BadRequestException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.NotFoundException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.ServiceException;
-import edu.esipe.i3.ezipflix.videodispatcher.service.ConversionService;
+import edu.esipe.i3.ezipflix.videodispatcher.service.DatabaseService;
+import edu.esipe.i3.ezipflix.videodispatcher.service.MediaService;
+import edu.esipe.i3.ezipflix.videodispatcher.service.MessagingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,11 +25,15 @@ import java.util.UUID;
 @RestController
 public class ConversionController {
 
-    private final ConversionService conversionService;
+    private final DatabaseService databaseService;
+    private final MediaService mediaService;
+    private final MessagingService messagingService;
 
     @Autowired
-    public ConversionController(ConversionService conversionService) {
-        this.conversionService = conversionService;
+    public ConversionController(DatabaseService databaseService, MediaService mediaService, MessagingService messagingService) {
+        this.databaseService = databaseService;
+        this.mediaService = mediaService;
+        this.messagingService = messagingService;
     }
 
     @PostMapping(value = "/convert")
@@ -53,11 +59,11 @@ public class ConversionController {
         log.info("originPath = {}", originPathStr);
         log.info("targetPath = {}", targetPathStr);
 
-        if (!this.conversionService.checkFileExists(originPathStr)) {
+        if (!this.mediaService.checkFileExists(originPathStr)) {
             throw new NotFoundException("Object \"" + originPathStr + "\" does not exist.");
         }
 
-        if (this.conversionService.checkFileExists(targetPathStr)) {
+        if (this.mediaService.checkFileExists(targetPathStr)) {
             throw new AlreadyExistsException("Object \"" + originPathStr + "\" has already been converted.");
         }
 
@@ -67,14 +73,14 @@ public class ConversionController {
                 request.getOriginPath(),
                 new URI(targetPathStr));
 
-        PutItemResult dbResult = this.conversionService.save(videoConversion);
+        PutItemResult dbResult = this.databaseService.save(videoConversion);
         if (dbResult == null
                 || dbResult.getSdkHttpMetadata() == null
                 || dbResult.getSdkHttpMetadata().getHttpStatusCode() != 200) {
             throw new ServiceException("Error when saving conversion info to database." );
         }
 
-        String messageId = this.conversionService.publish(videoConversion);
+        String messageId = this.messagingService.publish(videoConversion);
 
         log.info("Successfully sent conversion request.");
         return new ConversionResponse(videoConversion.getUuid(), messageId, dbResult, videoConversion.getConversionDate());
