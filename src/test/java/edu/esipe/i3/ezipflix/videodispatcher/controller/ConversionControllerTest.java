@@ -1,5 +1,7 @@
 package edu.esipe.i3.ezipflix.videodispatcher.controller;
 
+import com.amazonaws.http.HttpResponse;
+import com.amazonaws.http.SdkHttpMetadata;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +9,7 @@ import edu.esipe.i3.ezipflix.videodispatcher.definition.ConversionRequest;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.AlreadyExistsException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.BadRequestException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.NotFoundException;
+import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.ServiceException;
 import edu.esipe.i3.ezipflix.videodispatcher.service.ConversionService;
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -51,10 +54,15 @@ public class ConversionControllerTest {
 
     @Test
     public void convertReturnsAConversionResponse() throws Exception {
+        PutItemResult result = new PutItemResult();
         AttributeValue attributes = new AttributeValue("testAttribute");
+        HttpResponse response = new HttpResponse(null, null);
+        response.setStatusCode(200);
+        result.addAttributesEntry("attribute", attributes);
+        result.setSdkHttpMetadata(SdkHttpMetadata.from(response));
 
         when(conversionService.publish(any())).thenReturn("fakeMessageId");
-        when(conversionService.save(any())).thenReturn(new PutItemResult().addAttributesEntry("attribute", attributes));
+        when(conversionService.save(any())).thenReturn(result);
         when(conversionService.checkFileExists("fake.mkv")).thenReturn(true);
         when(conversionService.checkFileExists("fake.avi")).thenReturn(false);
 
@@ -121,6 +129,24 @@ public class ConversionControllerTest {
         thrown.expectMessage(Matchers.containsString("Extension of media file is invalid: targetPath"));
 
         ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), new URI("targetPath"));
+        conversionController.convert(request);
+    }
+
+    @Test
+    public void convertThrowsServiceException() throws Exception {
+        thrown.expect(ServiceException.class);
+        thrown.expectMessage(Matchers.containsString("Error when saving conversion info to database."));
+
+        PutItemResult result = new PutItemResult();
+        HttpResponse response = new HttpResponse(null, null);
+        response.setStatusCode(500);
+        result.setSdkHttpMetadata(SdkHttpMetadata.from(response));
+
+        when(conversionService.save(any())).thenReturn(result);
+        when(conversionService.checkFileExists("testObject.mkv")).thenReturn(true);
+        when(conversionService.checkFileExists("targetPath.avi")).thenReturn(false);
+
+        ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), new URI("targetPath.avi"));
         conversionController.convert(request);
     }
 

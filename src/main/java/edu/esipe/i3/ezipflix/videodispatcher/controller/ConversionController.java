@@ -7,6 +7,7 @@ import edu.esipe.i3.ezipflix.videodispatcher.definition.VideoConversion;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.AlreadyExistsException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.BadRequestException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.NotFoundException;
+import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.ServiceException;
 import edu.esipe.i3.ezipflix.videodispatcher.service.ConversionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +66,14 @@ public class ConversionController {
                 new Date(),
                 request.getOriginPath(),
                 new URI(targetPathStr));
+
         PutItemResult dbResult = this.conversionService.save(videoConversion);
+        if (dbResult == null
+                || dbResult.getSdkHttpMetadata() == null
+                || dbResult.getSdkHttpMetadata().getHttpStatusCode() != 200) {
+            throw new ServiceException("Error when saving conversion info to database." );
+        }
+
         String messageId = this.conversionService.publish(videoConversion);
 
         log.info("Successfully sent conversion request.");
