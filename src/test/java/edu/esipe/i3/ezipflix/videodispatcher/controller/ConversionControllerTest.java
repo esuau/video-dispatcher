@@ -10,7 +10,9 @@ import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.AlreadyExistsE
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.BadRequestException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.NotFoundException;
 import edu.esipe.i3.ezipflix.videodispatcher.definition.exception.ServiceException;
-import edu.esipe.i3.ezipflix.videodispatcher.service.ConversionService;
+import edu.esipe.i3.ezipflix.videodispatcher.service.DatabaseService;
+import edu.esipe.i3.ezipflix.videodispatcher.service.MediaService;
+import edu.esipe.i3.ezipflix.videodispatcher.service.MessagingService;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -40,7 +42,13 @@ public class ConversionControllerTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @Mock
-    private ConversionService conversionService;
+    private DatabaseService databaseService;
+
+    @Mock
+    private MediaService mediaService;
+
+    @Mock
+    private MessagingService messagingService;
 
     @InjectMocks
     private ConversionController conversionController;
@@ -61,10 +69,10 @@ public class ConversionControllerTest {
         result.addAttributesEntry("attribute", attributes);
         result.setSdkHttpMetadata(SdkHttpMetadata.from(response));
 
-        when(conversionService.publish(any())).thenReturn("fakeMessageId");
-        when(conversionService.save(any())).thenReturn(result);
-        when(conversionService.checkFileExists("fake.mkv")).thenReturn(true);
-        when(conversionService.checkFileExists("fake.avi")).thenReturn(false);
+        when(messagingService.publish(any())).thenReturn("fakeMessageId");
+        when(databaseService.save(any())).thenReturn(result);
+        when(mediaService.checkFileExists("fake.mkv")).thenReturn(true);
+        when(mediaService.checkFileExists("fake.avi")).thenReturn(false);
 
         ConversionRequest request = new ConversionRequest(new URI("fake.mkv"), null);
         mockMvc.perform(post("/convert")
@@ -86,7 +94,7 @@ public class ConversionControllerTest {
         thrown.expect(NotFoundException.class);
         thrown.expectMessage(Matchers.containsString("Object \"testObject.mkv\" does not exist."));
 
-        when(conversionService.checkFileExists("testObject.mkv")).thenReturn(false);
+        when(mediaService.checkFileExists("testObject.mkv")).thenReturn(false);
 
         ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), null);
         conversionController.convert(request);
@@ -97,7 +105,7 @@ public class ConversionControllerTest {
         thrown.expect(AlreadyExistsException.class);
         thrown.expectMessage(Matchers.containsString("Object \"testObject.mkv\" has already been converted."));
 
-        when(conversionService.checkFileExists(anyString())).thenReturn(true);
+        when(mediaService.checkFileExists(anyString())).thenReturn(true);
 
         ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), null);
         conversionController.convert(request);
@@ -108,7 +116,7 @@ public class ConversionControllerTest {
         thrown.expect(AlreadyExistsException.class);
         thrown.expectMessage(Matchers.containsString("Object \"testObject.mkv\" has already been converted."));
 
-        when(conversionService.checkFileExists(anyString())).thenReturn(true);
+        when(mediaService.checkFileExists(anyString())).thenReturn(true);
 
         ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), new URI("targetPath.avi"));
         conversionController.convert(request);
@@ -142,9 +150,9 @@ public class ConversionControllerTest {
         response.setStatusCode(500);
         result.setSdkHttpMetadata(SdkHttpMetadata.from(response));
 
-        when(conversionService.save(any())).thenReturn(result);
-        when(conversionService.checkFileExists("testObject.mkv")).thenReturn(true);
-        when(conversionService.checkFileExists("targetPath.avi")).thenReturn(false);
+        when(databaseService.save(any())).thenReturn(result);
+        when(mediaService.checkFileExists("testObject.mkv")).thenReturn(true);
+        when(mediaService.checkFileExists("targetPath.avi")).thenReturn(false);
 
         ConversionRequest request = new ConversionRequest(new URI("testObject.mkv"), new URI("targetPath.avi"));
         conversionController.convert(request);
