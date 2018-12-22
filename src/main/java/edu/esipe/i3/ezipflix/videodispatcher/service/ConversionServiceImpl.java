@@ -3,10 +3,9 @@ package edu.esipe.i3.ezipflix.videodispatcher.service;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.document.Item;
-import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
-import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.document.*;
+import com.amazonaws.services.dynamodbv2.document.spec.DeleteItemSpec;
+import com.amazonaws.services.dynamodbv2.model.DeleteItemResult;
 import com.amazonaws.services.dynamodbv2.model.PutItemResult;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -28,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -77,6 +77,8 @@ public class ConversionServiceImpl implements ConversionService {
                                 throw apiException;
                             }
                             log.error("Error publishing message = {}", message);
+                            log.error("Rollback...");
+                            remove(video.getUuid());
                         }
 
                         @Override
@@ -114,6 +116,28 @@ public class ConversionServiceImpl implements ConversionService {
         PutItemOutcome outcome = table.putItem(item);
         log.info("DB outcome = {}", outcome.getPutItemResult().getSdkHttpMetadata().toString());
         return outcome.getPutItemResult();
+    }
+
+    @Override
+    public DeleteItemResult remove(UUID uuid) {
+        AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard()
+                .withRegion(Regions.EU_WEST_3)
+                .build();
+        DynamoDB dynamoDB = new DynamoDB(client);
+        Table table = dynamoDB.getTable(tableName);
+
+        DeleteItemSpec deleteItemSpec = new DeleteItemSpec()
+                .withPrimaryKey(new PrimaryKey("uuid", uuid.toString()));
+
+        try {
+            log.info("Attempting delete...");
+            DeleteItemOutcome outcome = table.deleteItem(deleteItemSpec);
+            log.info("Successfully deleted item {}.", uuid);
+            return outcome.getDeleteItemResult();
+        } catch (Exception e) {
+            log.error("Unable to delete item.", e);
+        }
+        return null;
     }
 
     @Override
